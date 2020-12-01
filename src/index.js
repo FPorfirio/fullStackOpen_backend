@@ -1,11 +1,10 @@
 const express = require('express')
-const morgan = require('morgan');
+const morgan = require('morgan')
 const cors = require('cors')
 const Number = require('../models/number.js')
-const mongoose = require('mongoose')
+const PORT = process.env.PORT || 3001
 
 require('dotenv').config()
-
 
 morgan.token('id', function getId (req) {
 	return JSON.stringify(req.body)
@@ -16,14 +15,6 @@ app.use(express.static('build'))
 app.use(express.json())
 app.use(cors())
 app.use(morgan(':method :url :status :res[content-body] - :response-time ms :id'))
-
-const generateId = () => {
-	const maxId = persons.length > 0 ?
-	Math.max(...persons.map(person => person.id))
-	: 0
-
-	return maxId + 1
-}
   
 app.get('/info', (request, response) => {
 	Number.find({}).then(result => {
@@ -43,9 +34,9 @@ app.get('/api/persons/:id', (request, response, next) => {
 		.then(person => {
 			if(person){
 				response.json(person)
-			}else{
+			} else{
 				response.status(404).end()		
-			 }
+			}
 		})
 		.catch(error => next(error))
 })
@@ -74,9 +65,9 @@ app.delete('/api/persons/:id', (request, response, next) => {
 })
 
 app.post('/api/persons', (request, response, next) => {
-		const newPerson = request.body;
+	const newPerson = request.body;
 
-		/*if(newPerson === 'undefined'){
+	/*if(newPerson === 'undefined'){
 			return response.status(400).json({
 				error: 'content missing'
 			})
@@ -88,21 +79,21 @@ app.post('/api/persons', (request, response, next) => {
 			})
 		}*/
 
-		(async () => {
-			const checkNumber = await Number.findOne(newPerson)
+	(async () => {
+		const checkNumber = await Number.findOne(newPerson)
 			
-			if(checkNumber){
-				return response.status(400).json({
-					error: 'name must be unique'
-				})
-			}
-
-			const number = new Number({
-				name: newPerson.name,
-				number: newPerson.number
+		if(checkNumber){
+			return response.status(400).json({
+				error: 'name must be unique'
 			})
+		}
+
+		const number = new Number({
+			name: newPerson.name,
+			number: newPerson.number
+		})
 	
-			number.save(number)
+		number.save(number)
 			.then(savedNumber =>{
 				return savedNumber.toJSON()
 			})
@@ -112,32 +103,28 @@ app.post('/api/persons', (request, response, next) => {
 			.catch(error => next(error)) 
 
 	
-		})()	
+	})()	
 })
 
 
 const unknownEndpoint = (request, response) => {
 	response.status(404).send({ error: 'unknown endpoint' })
-  }
+}
   
 app.use(unknownEndpoint)
 
 const errorHandler = (error, request, response, next) => {
-	console.error(error.message)
-  
 	if (error.name === 'CastError') {
-	  return response.status(400).send({ error: 'malformatted id' })
+		return response.status(400).send({ error: 'malformatted id' })
 	} else if (error.name === 'ValidationError') {
-		console.log('erroooooorr')
-	  return response.status(400).json({ error: error.message })
+		
+		return response.status(400).json({ error: error.message })
 	}
-  
 	next(error)
 }
+
 app.use(errorHandler)
 
-const PORT = process.env.PORT || 3001
-
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
+	console.log(`Server running on port ${PORT}`)
 })
